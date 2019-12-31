@@ -44,7 +44,7 @@ def load_attempts(link_api, number_pages):
         link_page = link_pages + str(page)
         accounts_list = get_accounts_json(link_page)['records']
         list_to_add = get_late_posts(accounts_list)
-        if len(list_to_add) > 0:
+        if list_to_add:
             posted_late_list = posted_late_list + list_to_add
     return posted_late_list
 
@@ -79,8 +79,8 @@ def main():
     if accounts_json is None:
         exit('not correct link')
     number_page = get_number_pages(accounts_json)
-    data = load_attempts(pars_link, number_page)
-    output_midnighters(data)
+    accounts_late_posted = load_attempts(pars_link, number_page)
+    output_midnighters(accounts_late_posted)
 
 
 if __name__ == '__main__':
