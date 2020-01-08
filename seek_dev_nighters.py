@@ -1,61 +1,73 @@
+import pytz
 import requests
-import datetime
 from datetime import datetime
-from datetime import timezone
 
 
-def get_accounts(link_api):
-    response = requests.get(link_api)
-    if not response.ok:
-        return None
-    response_accounts = response.json()
-    return response_accounts
-
-
-def get_format_time(account):
-    time_stamp = account['timestamp']
-    loc_time = datetime.fromtimestamp(time_stamp, tz=timezone.utc)
+def get_local_time(time_stamp, time_zone):
+    loc_time = datetime.fromtimestamp(time_stamp, tz=pytz.timezone(time_zone))
     return loc_time
 
 
-def get_midnight_attempts(midnight_attempts):
-    posts_list = []
-    for account in midnight_attempts:
-        time_account = get_format_time(account)
+def get_midnight_attempts(attempts):
+    midnight_attempts = []
+    for attempt in attempts:
+        time_account = get_local_time(
+            attempt['timestamp'], attempt['timezone']
+        )
         if 0 < time_account.hour < 5:
-            posts_list.append(account)
-    return posts_list
+            midnight_attempts.append(attempt)
+    return midnight_attempts
 
 
-def load_attempts(link_api, accounts_json):
+def load_attempts(link_api):
     page = 0
-    while page != accounts_json['number_of_pages']:
+    while True:
         page = page + 1
-        payload = (('page', page),)
+        payload = {'page': page}
         accounts_page = requests.get(link_api, params=payload)
-        midnight_attempts = accounts_page.json()['records']
-        midnight_attempts = get_midnight_attempts(midnight_attempts)
-        if midnight_attempts:
-            yield midnight_attempts
+        if not accounts_page.ok:
+            return False
+        attempts = accounts_page.json()['records']
+        midnight_attempts = get_midnight_attempts(attempts)
+        yield from midnight_attempts
 
 
-def output_midnighters(midnight_attempt):
+def get_users_attempts(midnight_attempts):
+    user_attempts = dict()
+    key_time = 0
+    for midnight_attempt in midnight_attempts:
+        if midnight_attempt['username'] in user_attempts.keys():
+            user_attempts[midnight_attempt['username']][key_time].\
+                append(str(midnight_attempt['timestamp']))
+        else:
+            user_attempts[midnight_attempt['username']] = [
+                [str(midnight_attempt['timestamp'])],
+                str(midnight_attempt['timezone'])
+            ]
+    return user_attempts
+
+
+def output_midnighters(midnight_attempts):
     fmt = '%Y-%m-%d %H:%M:%S %Z%z'
-    for account in midnight_attempt:
-        time_posted = get_format_time(account).strftime(fmt)
-        path_file_out = 'username:{username} total time_posted:{time_posted}'.\
-            format(username=account['username'], time_posted=time_posted)
-        print('midnight_attempt account: ', path_file_out)
-        break
+    user_attempts = get_users_attempts(midnight_attempts)
+    key_time = 0
+    key_time_zone = 1
+    for user_name in user_attempts:
+        print('midnight_attempt account: ', user_name)
+        for time_attempt in user_attempts[user_name][key_time]:
+            time_zone = user_attempts[user_name][key_time_zone]
+            time_posted = get_local_time(float(time_attempt), time_zone).\
+                strftime(fmt)
+            path_file_out = 'total time_posted:{time_posted}'. \
+                format(time_posted=time_posted)
+            print(path_file_out)
 
 
 def main():
     link = 'http://devman.org/api/challenges/solution_attempts'
-    accounts = get_accounts(link)
-    if accounts is None:
-        exit('not correct link')
-    for midnight_attempt in load_attempts(link, accounts):
-        output_midnighters(midnight_attempt)
+    if not requests.get(link).ok:
+        print('not correct link')
+    output_midnighters(load_attempts(link))
 
 
 if __name__ == '__main__':
