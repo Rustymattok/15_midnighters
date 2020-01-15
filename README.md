@@ -21,10 +21,18 @@ $ python seek_dev_nighters.py
 
 # The sample of result script
 ```bash
-username:59a1317adb224963 total time_posted:2019-11-19 04:28:03 MSK+0300
-username:valeria.evg.chernysheva total time_posted:2019-11-07 04:04:39 MSK+0300
-username:59a1317adb224963 total time_posted:2019-11-06 04:54:11 MSK+0300
-username:chudov01091998 total time_posted:2019-10-25 04:18:18 MSK+0300
+midnight_attempt account:  59a1317adb224963
+total time_posted:2020-01-04 02:43:10 MSK+0300
+total time_posted:2019-12-26 01:38:11 MSK+0300
+total time_posted:2019-11-27 01:41:16 MSK+0300
+total time_posted:2019-11-20 02:16:14 MSK+0300
+total time_posted:2019-11-20 01:30:25 MSK+0300
+total time_posted:2019-11-15 01:04:30 MSK+0300
+midnight_attempt account:  id559514420
+total time_posted:2019-10-09 02:50:15 MSK+0300
+total time_posted:2019-10-08 04:38:20 MSK+0300
+midnight_attempt account:  id36248627
+total time_posted:2019-09-29 02:33:47 MSK+0300
 ```
 
 # Project Goals
