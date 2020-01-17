@@ -48,8 +48,9 @@ def count_users_attempts(midnight_attempts):
 
 def get_output_time(time_stamp, time_zone):
     fmt = '%Y-%m-%d %H:%M:%S %Z%z'
-    time_posted = get_local_time(float(time_stamp), str(time_zone)).strftime(fmt)
-    out_put_time = 'total time_posted:{time_posted}'.format(time_posted=time_posted)
+    time_posted = get_local_time(time_stamp, time_zone).strftime(fmt)
+    out_put_time = 'total time_posted:{time_posted}'.\
+        format(time_posted=time_posted)
     return out_put_time
 
 
