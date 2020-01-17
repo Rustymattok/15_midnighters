@@ -1,5 +1,6 @@
 import pytz
 import requests
+from requests.exceptions import HTTPError
 from datetime import datetime
 from collections import defaultdict
 
@@ -19,26 +20,24 @@ def get_midnight_attempts(attempts):
 
 def is_midnight_attempt(attempt):
     time_account = get_local_time(attempt['timestamp'], attempt['timezone'])
-    if 0 < time_account.hour < 5 and not None:
-        return True
-    return False
+    return 0 < time_account.hour < 5
 
 
 def load_attempts(link_api):
     page = 0
-    number_of_pages = requests.get(link_api).json()['number_of_pages']
     while True:
         page = page + 1
-        if page > number_of_pages:
-            return False
         payload = {'page': page}
-        accounts_page = requests.get(link_api, params=payload)
-        attempts = accounts_page.json()['records']
-        midnight_attempts = get_midnight_attempts(attempts)
-        yield from midnight_attempts
+        try:
+            accounts_page = requests.get(link_api, params=payload)
+            accounts_page.raise_for_status()
+            attempts = accounts_page.json()['records']
+            yield from attempts
+        except HTTPError:
+            return False
 
 
-def get_users_attempts(midnight_attempts):
+def count_users_attempts(midnight_attempts):
     user_attempts = defaultdict(list)
     for midnight_attempt in midnight_attempts:
         user_attempts[midnight_attempt['username']].append(
@@ -47,18 +46,21 @@ def get_users_attempts(midnight_attempts):
     return user_attempts
 
 
-def output_midnighters(midnight_attempts):
+def get_output_time(time_stamp, time_zone):
     fmt = '%Y-%m-%d %H:%M:%S %Z%z'
-    user_attempts = get_users_attempts(midnight_attempts)
+    time_posted = get_local_time(float(time_stamp), str(time_zone)).strftime(fmt)
+    out_put_time = 'total time_posted:{time_posted}'.format(time_posted=time_posted)
+    return out_put_time
+
+
+def output_midnighters(midnight_attempts):
+    user_attempts = count_users_attempts(midnight_attempts)
     key_username = 0
     key_time = 1
     for user in user_attempts.items():
         print('midnight_attempt account: ', user[key_username])
         for time_zone, time_stamp in user[key_time]:
-            time_posted = get_local_time(time_stamp, time_zone).strftime(fmt)
-            out_put_time = 'total time_posted:{time_posted}'.\
-                format(time_posted=time_posted)
-            print(out_put_time)
+            print(get_output_time(time_stamp, time_zone))
 
 
 def main():
@@ -67,8 +69,8 @@ def main():
         print('not correct link')
     try:
         output_midnighters(get_midnight_attempts(load_attempts(link)))
-    except ValueError:
-        print('no json data')
+    except HTTPError:
+        print('error link')
 
 
 if __name__ == '__main__':
